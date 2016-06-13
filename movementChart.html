@@ -1,0 +1,371 @@
+<!doctype html>
+<html>
+   <head>
+  	<title>Cow Chart</title>
+  	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.js"></script>
+  <style type="text/css">
+  	body{
+      background-color: #f6f6f6;
+    } 
+    .axis path,
+.axis line {
+    fill: none;
+    stroke: black;
+    shape-rendering: crispEdges;
+}
+
+.axis text {
+    font-family: sans-serif;
+    font-size: 11px;
+}
+  </style>
+   </head>
+<body> 
+	<div></div>
+	<script type="text/javascript">
+
+	var DB = [
+	{time:"12:00",
+	animals:[{
+		animal:1,
+		Ypos:500,
+		Xpos:0
+	},{
+		animal:2,
+		Ypos:450,
+		Xpos:20
+	},{
+		animal:3,
+		Ypos:470,
+		Xpos:50
+	},{
+		animal:4,
+		Ypos:450,
+		Xpos:30
+	},{
+		animal:5,
+		Ypos:420,
+		Xpos:24
+	}]},
+	{time:"1:00",
+	animals:[{
+		animal:1,
+		Ypos:450,
+		Xpos:80
+	},{
+		animal:2,
+		Ypos:320,
+		Xpos:50
+	},{
+		animal:3,
+		Ypos:470,
+		Xpos:70
+	},{
+		animal:4,
+		Ypos:450,
+		Xpos:90
+	},{
+		animal:5,
+		Ypos:420,
+		Xpos:100
+	}]},
+	{time:"2:00",
+	animals:[{
+		animal:1,
+		Ypos:450,
+		Xpos:100
+	},{
+		animal:2,
+		Ypos:300,
+		Xpos:50
+	},{
+		animal:3,
+		Ypos:470,
+		Xpos:70
+	},{
+		animal:4,
+		Ypos:450,
+		Xpos:10
+	},{
+		animal:5,
+		Ypos:400,
+		Xpos:150
+	}]},
+	{time:"3:00",
+	animals:[{
+		animal:1,
+		Ypos:410,
+		Xpos:100
+	},{
+		animal:2,
+		Ypos:350,
+		Xpos:80
+	},{
+		animal:3,
+		Ypos:470,
+		Xpos:200
+	},{
+		animal:4,
+		Ypos:450,
+		Xpos:10
+	},{
+		animal:5,
+		Ypos:400,
+		Xpos:180
+	}]},
+	{time:"4:00",
+	animals:[{
+		animal:1,
+		Ypos:400,
+		Xpos:120
+	},{
+		animal:2,
+		Ypos:300,
+		Xpos:100
+	},{
+		animal:3,
+		Ypos:450,
+		Xpos:200
+	},{
+		animal:4,
+		Ypos:450,
+		Xpos:10
+	},{
+		animal:5,
+		Ypos:200,
+		Xpos:280
+	}]}
+	];
+
+	// 12pm ~ 4pm
+
+function MovementChart(){
+	var self    = this;
+    var margin = {top: 70, right: 30, bottom: 30, left: 70},
+	width = 600 - margin.left - margin.right,
+    height = 600 - margin.top - margin.bottom;
+
+	this.height = height;
+	this.width  = width;
+	var green   = "#9ACD32";
+
+	this.mainCanvas = d3.select("div") 
+				 .append("svg")
+				 .attr("width",self.width + margin.left + margin.right)
+				 .attr("height",self.height+ margin.top + margin.bottom);
+	
+
+	this.canvas = this.mainCanvas 
+				 .append("svg")
+				 .append("g")
+				 .attr("transform", "translate("+margin.left+","+margin.top+")")
+				 .attr("width",self.height)
+				 .attr("height",self.width);
+
+	this.color  = d3.scale.category10();
+
+	var xScale = d3.scale.linear()
+                         .domain([0,self.width])
+                         .range([0,500]);
+    var xAxis = d3.svg.axis()
+	             .scale(xScale)
+	             .orient("bottom")
+	             .ticks(10);
+
+	this.mainCanvas.append("g")
+	        .attr("class", "axis")
+	        .attr("transform", "translate("+margin.left+"," + (self.height + margin.top) + ")")
+			.call(xAxis)
+			.append("text")
+            .attr("class", "label")
+            .attr("x", self.width)
+            .attr("y", -6)
+            .style("text-anchor", "end")
+            .text("Meters");
+
+	var yScale = d3.scale.linear()
+                         .domain([0,self.height])
+                         .range([self.height,0]);
+	var yAxis = d3.svg.axis()
+                  .scale(yScale)
+                  .orient("left")
+                  .ticks(10);
+
+    this.mainCanvas.append("g")
+    			  .attr("class","axis")
+    			  .attr("transform","translate("+margin.left+","+margin.top+")")
+    			  .call(yAxis)
+    			  .append("text")
+                  .attr("class", "label")
+                  .attr("transform", "rotate(-90)")
+                  .attr("y", 6)
+                  .attr("dy", ".71em")
+                  .style("text-anchor", "end")
+                  .text("Meters");
+
+    this.movementDisplayer = d3.select("div") 
+				 .append("svg")
+				 .attr("width",self.width + margin.left + margin.right)
+				 .attr("height",self.height / 2);
+}
+
+MovementChart.prototype.addData = function(data){
+	this.data = data;
+    this.refresh()
+}
+
+MovementChart.prototype.refresh = function(){
+	var self = this;
+	this.circles  = self.canvas.selectAll("circle")
+				 .data(self.data.animals);
+
+			this.circles
+			      .enter()
+			      .append("circle");
+
+			this.circles
+			  .attr("fill",function(d){return self.color(d.animal)})
+			      .attr("r",10)
+				  .transition()
+				  .duration(function(d,i){
+				 		return 2000})
+				 	.delay(function(d,i){ return 500})
+				 	.attr("cx",function(d,i){return d.Xpos})
+				 	.attr("cy",function(d,i){ return d.Ypos});
+			
+			this.imgs = self.canvas.selectAll("image")
+			     .data(self.data.animals);
+			this.imgs
+			     .enter()
+			     .append("svg:image")
+			     .attr("xlink:href", "./images/cow.svg");
+
+			this.imgs
+			     .attr('width', 20)
+                 .attr('height', 20)
+				 .transition()
+				 .duration(function(d,i){
+				 		return 2000})
+				 .delay(function(d,i){ return 500})
+				 .attr("x",function(d,i){return d.Xpos +5})
+				 .attr("y",function(d,i){ return d.Ypos -10});
+			
+			this.circles.exit().remove();
+			this.imgs.exit().remove();
+
+	var list = this.movementDisplayer
+	            .selectAll("circle")
+				.data(self.data.animals);
+
+	         list
+				.enter()
+				.append("circle");
+
+	   		   list  
+	   			  .attr("fill",function(d){return self.color(d.animal)})
+			      .attr("r",20)
+				  .attr("cx",function(d,i){ return i*100 + 120})
+				  .attr("cy",function(d,i){ return 80});
+
+		
+           var listImages = this.movementDisplayer.selectAll("image")
+			    .data(self.data.animals);
+
+			listImages
+			     .enter()
+			     .append("svg:image")
+			     .attr("xlink:href", "./images/cow.svg");
+
+			listImages
+			     .attr('width', 40)
+                 .attr('height', 40)
+				 .attr("x",function(d,i){return i* 100 +130;})
+				 .attr("y",function(d,i){ return 60});
+}
+
+
+			  
+					
+
+
+MovementChart.prototype.startChart = function(dataBase){
+ var self = this;
+ var timerNumber = 1500,i = 0, DBLength = dataBase.length;
+ this.backUpData;
+ this.total = [];
+
+ for(var k=0; k < dataBase[0].animals.length; k=k+1){
+ 	self.total.push({
+ 		animal:dataBase[0].animals[k].animal,
+ 		total:0
+ 	});
+ }
+ 
+ function add() {
+    if( i < DBLength ){
+        setTimeout(add,timerNumber);
+        self.addData(dataBase[i])
+         if(typeof self.backUpData == "object"){
+         	var j;
+        	for(j = 0; j < self.backUpData.animals.length; j++){
+        		var l;
+        		var prev    = self.backUpData.animals[j];
+        		var current = dataBase[i].animals[j];
+        		var x1 = prev.Xpos;
+        		var x2 = current.Xpos;
+        		var y1 = prev.Ypos;
+        		var y2 = current.Ypos;
+	            var c  = Math.sqrt( (x2-=x1)*x2 + (y2-=y1)*y2 );
+	            for(l =0; l < self.total.length; l=l+1){
+	            	if(self.total[l].animal === current.animal){
+	            		var prevTotal = self.total[l].total;
+	            		var currentDistance = Math.round(c);
+	            		self.total[l].total = (prevTotal + currentDistance);
+	            	}
+	            }
+	            self.addTotal(self.total)
+        	}
+        	self.backUpData = dataBase[i];
+        } 
+        if(typeof self.backUpData == "undefined"){
+        	self.backUpData = dataBase[i];
+        }
+        i=i+1;
+    }
+  }
+  add();
+}
+
+MovementChart.prototype.addTotal = function(totalDistance){
+	var totalText = this.movementDisplayer
+	            .selectAll("text")
+				.data(totalDistance);
+
+	totalText   .text(function(d){return d.total})
+				.enter()
+				.append("text");
+
+	totalText 	.attr("x",function(d,i){ return i*100 + 110})
+				.attr("y",function(d,i){ return 55})
+				.transition()
+				.text(function(d){return d.total});
+		totalText.exit().remove();
+
+	var header = this.movementDisplayer
+					.append("text")
+					.attr("x",this.width / 2 - 30)
+					.attr("y",25) 
+					.style("text-decoration","underline")
+					.text("Total distance travelled in meters");
+}
+
+var startChart = function(){
+  var movementchart = new MovementChart();
+  movementchart.startChart(DB);
+}
+
+startChart();
+
+	</script>
+</body>
+</html>
